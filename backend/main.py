@@ -1,10 +1,12 @@
 # backend/main.py
 
 from fastapi import FastAPI, Depends, HTTPException, status
+from db import fake_tables_db
 from auth import (
     authenticate_user,
     create_jwt_token,
     jwt,
+    JWTError,
     SECRET_KEY,
     ALGORITHM,
     Token,
@@ -12,11 +14,6 @@ from auth import (
     UserLogin,
     oauth2_scheme
 )
-#from fastapi.security import OAuth2PasswordBearer # Для работы с OAuth2 и JWT-токенами
-#from pydantic import BaseModel # Для создания схем данных? (Pydantic)
-#from passlib.context import CryptContext # Для безопасного хранения паролей
-#from jose import jwt, JWTError # Для генерации и проверки JWT-токенов
-#import sqlite3 # пока используется фейкова БД
 
 app = FastAPI()
 
@@ -127,5 +124,20 @@ async def protected_route(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return {"message": f"Привет, {payload['fio']}, роль: {payload['role']}, email: {payload['email']}, id: {payload['id']}"}
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Неверный токен")
+
+
+@app.get("/tables")
+async def get_tables(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        role = payload["role"]
+        tables = []
+
+        for i in fake_tables_db:
+            if (fake_tables_db[i]["university-id"] == role) or (role == "1"):
+                tables.append(fake_tables_db[i])
+        return tables
     except JWTError:
         raise HTTPException(status_code=401, detail="Неверный токен")
