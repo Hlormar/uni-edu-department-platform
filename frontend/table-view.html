@@ -1,0 +1,69 @@
+<!-- frontend/table-view.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Просмотр таблицы</title>
+</head>
+<body>
+  <h2>Просмотр таблицы</h2>
+  <div id="table-info"></div>
+  <table border="1" id="data-table"></table>
+  <br />
+  <button onclick="window.location.href='dashboard.html'">Назад</button>
+  <button onclick="editTable()">Редактировать</button>
+
+  <script src="auth.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableId = urlParams.get("id");
+    const token = localStorage.getItem("token");
+
+    async function loadTable() {
+      const res = await fetch(`http://localhost:8000/tables/${tableId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+
+      document.getElementById("table-info").innerHTML = `
+        <p><strong>Название:</strong> ${data.name}</p>
+        <p><strong>Автор:</strong> ${data.author}</p>
+        <p><strong>Дата:</strong> ${new Date(data.created_at).toLocaleString()}</p>
+      `;
+
+      const table = document.getElementById("data-table");
+      table.innerHTML = "";
+
+      // Заголовки
+      const thead = document.createElement("thead");
+      const trHead = document.createElement("tr");
+      Object.keys(data.rows[0] || {}).forEach(key => {
+        const th = document.createElement("th");
+        th.textContent = key;
+        trHead.appendChild(th);
+      });
+      thead.appendChild(trHead);
+      table.appendChild(thead);
+
+      // Тело
+      const tbody = document.createElement("tbody");
+      data.rows.forEach(row => {
+        const tr = document.createElement("tr");
+        Object.values(row).forEach(val => {
+          const td = document.createElement("td");
+          td.textContent = val;
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+    }
+
+    function editTable() {
+      window.location.href = `table-edit.html?id=${tableId}`;
+    }
+
+    loadTable();
+  </script>
+</body>
+</html>

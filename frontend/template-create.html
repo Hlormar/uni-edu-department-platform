@@ -1,0 +1,56 @@
+<!-- frontend/template-create.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Создать шаблон</title>
+</head>
+<body>
+  <h2>Создать новый шаблон таблицы</h2>
+  <form id="create-form">
+    <label>Название шаблона:</label><br />
+    <input type="text" name="name" required /><br /><br />
+
+    <label>Поля (через запятую):</label><br />
+    <input type="text" name="fields" placeholder="ФИО,Группа,Email" required /><br /><br />
+
+    <button type="submit">Создать</button>
+  </form>
+
+  <script src="auth.js"></script>
+  <script>
+    document.getElementById("create-form").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const name = formData.get("name");
+      const fields = formData.get("fields").split(",").map(f => f.trim());
+
+      const sampleRow = {};
+      fields.forEach(f => sampleRow[f] = "");
+
+      const payload = {
+        name,
+        rows: [sampleRow],
+      };
+
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:8000/templates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        alert("Шаблон создан!");
+        window.location.href = "dashboard.html";
+      } else {
+        alert("Ошибка при создании шаблона");
+      }
+    });
+  </script>
+</body>
+</html>

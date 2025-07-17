@@ -1,0 +1,80 @@
+<!-- frontend/login.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Вход</title>
+</head>
+<body>
+  <h2>Вход в систему</h2>
+  <form id="login-form">
+    <label>Электронная почта:</label><br>
+    <input type="text" id="username" name="username" required><br><br>
+    
+    <label>Пароль:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+    
+    <button type="submit">Войти</button>
+  </form>
+
+  <div id="result" style="margin-top: 20px;"></div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      // sending pass and login -> token
+      const response = await fetch('http://localhost:8000/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Сохраняем токен в localStorage
+        localStorage.setItem('token', data.access_token);
+        try {
+          // Делаем GET-запрос к защищённому маршруту
+          const protected_response = await fetch('http://localhost:8000/protected', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${data.access_token}`
+            }
+          });
+
+          const protected_data = await protected_response.json();
+
+          // Показываем результат
+          document.getElementById('result').innerHTML = `
+            <p>✅ Авторизация успешна!</p>
+            <p><code>${protected_data.message}</code></p>
+            <p>Токен: <code>${data.access_token}</code></p>
+            <button onclick="goToDashboard()">Перейти в кабинет</button>
+            `;
+        } 
+        catch (err) {
+            console.error("Ошибка при получении данных:", err);
+            document.getElementById('result').innerHTML = `
+              <p style="color:red;">❌ Не удалось получить данные с сервера</p>
+            `;
+        }
+      } 
+      else {
+        document.getElementById('result').innerHTML = `
+          <p style="color:red;">❌ Ошибка: ${data.detail || 'Неизвестная ошибка'}</p>
+        `;
+      }
+    });
+
+    function goToDashboard() {
+      window.location.href = 'dashboard.html'; // Можно создать dashboard.html
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!-- frontend/table-edit.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Редактировать таблицу</title>
+</head>
+<body>
+  <h2>Редактировать таблицу</h2>
+  <form id="edit-form"></form>
+  <button onclick="saveData()">Сохранить</button>
+  <button onclick="window.location.href='dashboard.html'">Отмена</button>
+
+  <script src="auth.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableId = urlParams.get("id");
+    const token = localStorage.getItem("token");
+
+    async function loadData() {
+      const res = await fetch(`http://localhost:8000/tables/${tableId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      const form = document.getElementById("edit-form");
+
+      data.rows.forEach((row, index) => {
+        Object.entries(row).forEach(([key, value]) => {
+          const label = document.createElement("label");
+          label.textContent = `${key}:`;
+          const input = document.createElement("input");
+          input.type = "text";
+          input.name = `${index}_${key}`;
+          input.value = value;
+          input.style.display = "block";
+          form.appendChild(label);
+          form.appendChild(input);
+        });
+      });
+    }
+
+    async function saveData() {
+      const formData = new FormData(document.getElementById("edit-form"));
+      const updatedRows = {};
+      for (const [key, value] of formData.entries()) {
+        const [rowIndex, field] = key.split("_");
+        if (!updatedRows[rowIndex]) updatedRows[rowIndex] = {};
+        updatedRows[rowIndex][field] = value;
+      }
+
+      await fetch(`http://localhost:8000/tables/${tableId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rows: Object.values(updatedRows) }),
+      });
+
+      alert("Изменения сохранены!");
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

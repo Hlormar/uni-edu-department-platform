@@ -1,0 +1,60 @@
+<!-- frontend/dashboard.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Дэшборд</title>
+</head>
+<body>
+  <h2>Добро пожаловать!</h2>
+  <p id="user-info"></p>
+
+  <input type="text" id="search" placeholder="Поиск по названию..." />
+  <button onclick="fetchTables()">Найти</button>
+  <ul id="tables-list"></ul>
+
+  <div id="actions">
+    <button id="create-btn" style="display:none;" onclick="window.location.href='template-create.html'">
+      Создать новый шаблон
+    </button>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+
+    // Получаем данные пользователя из токена
+    function parseJwt(token) {
+      return JSON.parse(atob(token.split(".")[1]));
+    }
+
+    const payload = parseJwt(token);
+    document.getElementById("user-info").innerText = `Вы вошли как: ${payload.sub} (${payload.role})`;
+
+    if (payload.role === "department") {
+      document.getElementById("create-btn").style.display = "inline-block";
+    }
+
+    async function fetchTables() {
+      const res = await fetch("http://localhost:8000/tables", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const tables = await res.json();
+
+      const list = document.getElementById("tables-list");
+      list.innerHTML = "";
+      tables.forEach((t) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <strong>${t.name}</strong> 
+          <em>(${new Date(t.created_at).toLocaleDateString()})</em> 
+          <a href="table-view.html?id=${t.id}">Посмотреть</a>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    fetchTables();
+  </script>
+</body>
+</html>
