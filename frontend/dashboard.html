@@ -29,12 +29,13 @@
     }
 
     const payload = parseJwt(token);
-    document.getElementById("user-info").innerText = `Вы вошли как: ${payload.sub} (${payload.role})`;
-
-    if (payload.role === "department") {
+    document.getElementById("user-info").innerText = `Вы вошли как: ${payload.fio} (${payload.email})`;
+    // Кнопка "создать новую таблицу"
+    if (payload.role === "1") {
       document.getElementById("create-btn").style.display = "inline-block";
     }
-
+    
+    // table list
     async function fetchTables() {
       const res = await fetch("http://localhost:8000/tables", {
         headers: { Authorization: `Bearer ${token}` },
@@ -46,9 +47,9 @@
       tables.forEach((t) => {
         const li = document.createElement("li");
         li.innerHTML = `
-          <strong>${t.name}</strong> 
-          <em>(${new Date(t.created_at).toLocaleDateString()})</em> 
-          <a href="table-view.html?id=${t.id}">Посмотреть</a>
+          <strong>${t.template} ${t.university}</strong> 
+          <a href="table-view.html?id=${t.file}">\n Раскрыть</a>
+          <em>создан ${t.creation_date}  изменен${t.last_updated} кем изменен: ${t.updated_by}</em>
         `;
         list.appendChild(li);
       });
